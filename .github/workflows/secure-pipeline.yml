@@ -30,4 +30,4 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest app/tests
+          python -m pytest app/tests

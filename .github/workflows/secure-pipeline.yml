@@ -151,3 +151,36 @@ jobs:
       - name: Check application health
         run: |
           curl --fail http://localhost:8000/health
+
+
+  dast:
+    name: DAST with OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: deploy_test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t secure-cicd-app:latest .
+
+      - name: Run application container
+        run: |
+          docker run -d -p 8000:8000 --name secure-cicd-app secure-cicd-app:latest
+          sleep 10
+          curl --fail http://localhost:8000/health
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          docker run --network host -v ${{ github.workspace }}:/zap/wrk/:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://localhost:8000 \
+            -r zap-report.html \
+            -I
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap-report.html

